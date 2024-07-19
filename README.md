@@ -21,6 +21,7 @@ cmake -B build \
     -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
     -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build build --config Release
+OZIMMU_LIB=$(pwd)/build/libozimmu.so
 ```
 
 ## Test example
@@ -32,8 +33,45 @@ make -C cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/ SMS="90"
 # check if it runs
 cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS -device=0 -sizemult=1
 # try with ozaki scheme
-OZIMMU_COMPUTE_MODE=fp64_int8_4 OZIMMU_INFO=1 OZIMMU_ERROR=1 OZIMMU_ENABLE_CULIP_PROFILING=1 LD_PRELOAD=$(pwd)/build/libozimmu.so \
+OZIMMU_COMPUTE_MODE=fp64_int8_4 OZIMMU_INFO=1 OZIMMU_ERROR=1 OZIMMU_ENABLE_CULIP_PROFILING=1 LD_PRELOAD=${OZIMMU_LIB} \
     cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS -device=0 -sizemult=1
+```
+
+## Test RI-MP2 quantum chemistry code
+```bash
+# compile with -Knolargepage,nohpctag,simd_reg_size=agnostic
+# move dependencies to GH
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${PWD}/libs"
+# prep mpi env
+export OMPI_HOME="/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/comm_libs/openmpi/openmpi-3.1.5"
+export PATH="${OMPI_HOME}/bin:${PATH}"
+export LD_LIBRARY_PATH="${OMPI_HOME}/lib:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/compilers/lib:${LD_LIBRARY_PATH}"
+ulimit -s hard
+MPIEXTRA=("-mca" "orte_base_help_aggregate" "0")
+MPIEXTRA+=("-mca" "btl_base_warn_component_unused" "0")
+MPIEXTRA+=("--oversubscribe")
+MPIEXTRA+=("-x" "OMP_STACKSIZE=512M" "-x" "OMP_NUM_THREADS=1")
+[ ! -f INPUT ] && tar xzf data.tar.gz
+mpirun ${MPIEXTRA[@]} -np 4 ./rimp2_nohpc_fast.exe
+```
+
+## Test RI-MP2 with ozIMMU
+```bash
+OZIEXTRA=("-x" "LD_PRELOAD=${OZIMMU_LIB}")
+OZIEXTRA+=("-x" "OZIMMU_COMPUTE_MODE=fp64_int8_4")
+OZIEXTRA+=("-x" "OZIMMU_INFO=1")
+OZIEXTRA+=("-x" "OZIMMU_ERROR=1")
+OZIEXTRA==("-x" "OZIMMU_ENABLE_CULIP_PROFILING=1")
+mpirun ${MPIEXTRA[@]} ${OZIEXTRA[@]} -np 4 ./rimp2_nohpc_fast.exe
+```
+
+## Evaluate slice-count w/ RI-MP2 and ozIMMU
+```bash
+for SC in $(seq 3 18); do
+    OZIEXTRA=("-x" "LD_PRELOAD=${OZIMMU_LIB}")
+    OZIEXTRA+=("-x" "OZIMMU_COMPUTE_MODE=fp64_int8_${SC}")
+    mpirun ${MPIEXTRA[@]} ${OZIEXTRA[@]} -np 4 ./rimp2_nohpc_fast.exe
+done
 ```
 
 The supported compute modes are [here](#supported-compute-mode).

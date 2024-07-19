@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(ozimmu LANGUAGES CXX CUDA)
+project(ozimmu LANGUAGES CXX CUDA Fortran)
 
 set(BUILD_TEST OFF)
 
@@ -30,6 +30,8 @@ add_library(${lib_name} SHARED
 	${SRCDIR}/gemm.cu
 	${SRCDIR}/cublas.cu
 	${SRCDIR}/culip.cu
+	${SRCDIR}/wrap_dgemm.F90
+	${SRCDIR}/offload_dgemm.cxx
 	${HEADERS}
 	)
 
