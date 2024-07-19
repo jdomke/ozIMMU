@@ -2,27 +2,40 @@
 
 This library intercepts function calls for cuBLAS DGEMM functions and executes ozIMMU instead
 
+## Prepare
+```bash
+wget https://github.com/Kitware/CMake/releases/download/v3.29.7/cmake-3.29.7-linux-aarch64.sh
+mkdir -p cmake; bash ./cmake-3.29.7-linux-aarch64.sh --prefix=$(pwd)/cmake --skip-license
+export PATH="$(pwd)/cmake/bin:${PATH}"
+```
+
 ## Build
 ```bash
-git clone https://github.com/enp1s0/ozIMMU --recursive
+git clone https://github.com/jdomke/ozIMMU --recursive
 cd ozIMMU
-mkdir build
-cd build
-cmake ..
-make -j4
+git checkout low-prec-gracehopper
+sed -i -e 's@CUDA_ARCHITECTURES.*@CUDA_ARCHITECTURES 90)@g' CMakeLists.txt
+cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+    -DCUDAToolkit_ROOT=/usr/local/cuda \
+    -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+    -DCMAKE_CUDA_ARCHITECTURES=90
+cmake --build build --config Release
 ```
 
-## Usage
-
-1. Set an environmental variable to hijack the function calls
+## Test example
 ```bash
-export LD_PRELOAD=/path/to/ozIMMU/build/libozimmu.so
+git clone https://github.com/NVIDIA/cuda-samples.git
+sed -i -e 's@= . \* block_size@= 32 * block_size@g' -e 's@Sgemm@Dgemm@g' -e 's@float@double@g' -e 's@double msecTotal@float msecTotal@g' cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS.cpp
+sed -i -e 's@sdkCompareL2fe(const.*@sdkCompareL2fe(const double *reference, const double *data,@g' cuda-samples/Common/helper_image.h
+make -C cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/ SMS="90"
+# check if it runs
+cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS -device=0 -sizemult=1
+# try with ozaki scheme
+OZIMMU_COMPUTE_MODE=fp64_int8_4 OZIMMU_INFO=1 OZIMMU_ERROR=1 OZIMMU_ENABLE_CULIP_PROFILING=1 LD_PRELOAD=$(pwd)/build/libozimmu.so \
+    cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS -device=0 -sizemult=1
 ```
 
-2. Set an environmental variable to choose the compute mode
-```bash
-export OZIMMU_COMPUTE_MODE=fp64_int8_9
-```
 The supported compute modes are [here](#supported-compute-mode).
 
 3. Execute the application
