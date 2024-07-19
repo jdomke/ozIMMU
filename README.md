@@ -26,7 +26,6 @@ OZIMMU_LIB=$(pwd)/build/libozimmu.so
 
 ## Test example
 ```bash
-git clone https://github.com/NVIDIA/cuda-samples.git
 sed -i -e 's@= . \* block_size@= 32 * block_size@g' -e 's@Sgemm@Dgemm@g' -e 's@float@double@g' -e 's@double msecTotal@float msecTotal@g' cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS.cpp
 sed -i -e 's@sdkCompareL2fe(const.*@sdkCompareL2fe(const double *reference, const double *data,@g' cuda-samples/Common/helper_image.h
 make -C cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/ SMS="90"
