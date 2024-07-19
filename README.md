@@ -13,8 +13,6 @@ export PATH="$(pwd)/cmake/bin:${PATH}"
 ```bash
 git clone https://github.com/jdomke/ozIMMU --recursive
 cd ozIMMU
-git checkout low-prec-gracehopper
-sed -i -e 's@CUDA_ARCHITECTURES.*@CUDA_ARCHITECTURES 90)@g' CMakeLists.txt
 cmake -B build \
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
     -DCUDAToolkit_ROOT=/usr/local/cuda \
