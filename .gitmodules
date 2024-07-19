@@ -10,3 +10,6 @@
 [submodule "test/gpu_monitor"]
 	path = test/gpu_monitor
 	url = https://github.com/enp1s0/gpu_monitor
+[submodule "cuda-samples"]
+	path = cuda-samples
+	url = https://github.com/NVIDIA/cuda-samples.git
