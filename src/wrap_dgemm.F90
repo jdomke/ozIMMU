@@ -70,7 +70,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           pC(ldc,n) = c(ldc,n)
           call offload_dgemm(lay, ta, tb, 1024, 1024, 1024,           &
                              alpha, pA, 1024, pB, 1024, beta, pC, 1024)
-          c = pC(ldc,n)
+          c(ldc,n) = pC(ldc,n)
       end if
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
