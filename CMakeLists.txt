@@ -31,7 +31,7 @@ add_library(${lib_name} SHARED
 	${SRCDIR}/cublas.cu
 	${SRCDIR}/culip.cu
 	${SRCDIR}/wrap_dgemm.F90
-	${SRCDIR}/offload_dgemm.cxx
+	${SRCDIR}/offload_dgemm.cpp
 	${HEADERS}
 	)
 
