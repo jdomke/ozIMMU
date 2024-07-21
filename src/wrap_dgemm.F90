@@ -53,6 +53,9 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
           write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
+      else if (m .le. 0 .or. n .le. 0 .or. k .le. 0) then
+          call offload_dgemm(lay, ta, tb, m, n, k,                    &
+                             alpha, a, lda, b, ldb, beta, c, ldc)
       else
           ! fucking phd codes
           ka = k
