@@ -105,7 +105,7 @@ void offload_dgemm(const int oLayout,
             cublasCreate(&handle)
             );
     checkCudaErrors(
-            cublasSetMathMode(CUBLAS_DEFAULT_MATH)
+            cublasSetMathMode(&handle, CUBLAS_DEFAULT_MATH)
             );
 
     cublasOperation_t transa = (0 == oTransA) ? CUBLAS_OP_N : CUBLAS_OP_T;
