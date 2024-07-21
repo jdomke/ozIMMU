@@ -18,7 +18,7 @@ void offload_dgemm(const int oLayout,
                    const double oBeta,
                    double * oC, const int oLdc)
 {
-    std::cerr << "offload_dgemm: m,n,k=" << oM << oN << oK << std::endl;;
+    std::cerr << "offload_dgemm: l,ta,tb,m,n,k,lda,ldb,ldc=" << oLayout << oTransA << oTransB << oM << oN << oK << oLda << oLdb << oLdc << std::endl;;
 
     /*
     cublasHandle_t handle;
