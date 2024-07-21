@@ -33,6 +33,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
 !     .. External Functions ..
       LOGICAL LSAME
       EXTERNAL lsame
+      !write(*,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
       lay = 0
       ta = 0
       tb = 0
@@ -52,10 +53,11 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       if (m .ge. 1024 .and. n .ge. 1024 .and. k .ge. 1024) then
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
-          write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
+          !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
       else if (m .le. 0 .or. n .le. 0 .or. k .le. 0) then
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
+          !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
       else
           ! fucking phd codes
           ka = k
@@ -75,7 +77,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           call offload_dgemm(lay, ta, tb, 1024, 1024, 1024,           &
                              alpha, pA, 1024, pB, 1024, beta, pC, 1024)
           c(1:ldc,1:n) = pC(1:ldc,1:n)
-          write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
+          !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
       end if
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
