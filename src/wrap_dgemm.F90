@@ -65,9 +65,9 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           pA = 0
           pB = 0
           pC = 0
-          pA(lda,ka) = a
-          pB(ldb,kb) = b
-          pC(ldc,n) = c
+          pA(lda,ka) = a(lda,ka)
+          pB(ldb,kb) = b(ldb,kb)
+          pC(ldc,n) = c(ldc,n)
           call offload_dgemm(lay, ta, tb, 1024, 1024, 1024,           &
                              alpha, pA, 1024, pB, 1024, beta, pC, 1024)
           c = pC(ldc,n)
