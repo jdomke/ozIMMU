@@ -101,6 +101,10 @@ void offload_dgemm(const int oLayout,
             );
 
     cublasHandle_t handle;
+    checkCudaErrors(
+            cublasCreate(&handle)
+            );
+
     cublasOperation_t transa = (0 == oTransA) ? CUBLAS_OP_N : CUBLAS_OP_T;
     cublasOperation_t transb = (0 == oTransB) ? CUBLAS_OP_N : CUBLAS_OP_T;
     int m = oM, n = oN, k = oK, lda = oLda, ldb = oLdb, ldc = oLdc;
