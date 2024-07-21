@@ -88,13 +88,13 @@ void offload_dgemm(const int oLayout,
             cudaMemcpy(A, oA, memSizeA, cudaMemcpyHostToDevice)
             );
     checkCudaErrors(
-            cudaMalloc((void**)&A, memSizeB)
+            cudaMalloc((void**)&B, memSizeB)
             );
     checkCudaErrors(
             cudaMemcpy(B, oB, memSizeB, cudaMemcpyHostToDevice)
             );
     checkCudaErrors(
-            cudaMalloc((void**)&A, memSizeC)
+            cudaMalloc((void**)&C, memSizeC)
             );
     checkCudaErrors(
             cudaMemcpy(C, oC, memSizeC, cudaMemcpyHostToDevice)
