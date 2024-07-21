@@ -26,6 +26,8 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       double precision, dimension(lda,*) :: a
       double precision, dimension(ldb,*) :: b
       double precision, dimension(ldc,*) :: c
+      integer(kind=4) :: ka, kb
+      double precision, dimension(1024,1024) :: pA, pB, pC
 
 #ifndef DONTWRAPGEMM
 !     .. External Functions ..
@@ -47,8 +49,29 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       else if (lsame(transb,'C')) then
           tb = 2
       end if
-      call offload_dgemm(lay, ta, tb, m, n, k,                        &
-                         alpha, a, lda, b, ldb, beta, c, ldc)
+      if (m .ge. 1024 .and. n .ge. 1024 .and. k .ge. 1024) then
+          call offload_dgemm(lay, ta, tb, m, n, k,                    &
+                             alpha, a, lda, b, ldb, beta, c, ldc)
+      else
+          ! fucking phd codes
+          ka = k
+          kb = n
+          if (ta .ne. 0) then
+              ka = m
+          end if
+          if (tb .ne. 0) then
+              kb = k
+          end if
+          pA = 0
+          pB = 0
+          pC = 0
+          pA(lda,ka) = a
+          pB(ldb,kb) = b
+          pC(ldc,n) = c
+          call offload_dgemm(lay, ta, tb, 1024, 1024, 1024,           &
+                             alpha, pA, 1024, pB, 1024, beta, pC, 1024)
+          c = pC(ldc,n)
+      end if
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
 !     .. External Functions ..
