@@ -92,7 +92,11 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
                              pC, max(1024,ldc))
           c(1:ldc,1:n) = pC(1:ldc,1:n)
           !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
-          deallocate(pA, pB, pC)
+          deallocate(pA, pB, pC, STAT=istat, ERRMSG=errmsg)
+          if (istat .ne. 0) then
+              write(*,*) errmsg, " : istat =", istat
+              call abort
+          end if
       end if
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
