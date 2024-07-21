@@ -12,6 +12,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       integer(kind=c_int), intent(in), value :: oTransA, oTransB
       integer(kind=c_int), intent(in), value :: oM, oN, oK
       integer(kind=c_int), intent(in), value :: oLda, oLdb, oLdc
+      real(kind=c_double), intent(in), value :: oAlpha, oBeta
       real(kind=c_double), intent(in)    :: oA(oLda,*), oB(oLdb,*)
       real(kind=c_double), intent(inout) :: oC(oLdc,*)
       end subroutine offload_dgemm
