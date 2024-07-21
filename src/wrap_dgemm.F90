@@ -27,7 +27,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       double precision, dimension(ldb,*) :: b
       double precision, dimension(ldc,*) :: c
       integer(kind=4) :: ka, kb
-      double precision, dimension(1024,1024) :: pA, pB, pC
+      double precision, dimension(:,:), allocatable :: pA, pB, pC
 
 #ifndef DONTWRAPGEMM
 !     .. External Functions ..
@@ -68,16 +68,25 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           if (tb .ne. 0) then
               kb = k
           end if
+          allocate(pA(1:max(1024,lda),1:max(1024,ka)),                &
+                   pB(1:max(1024,ldb),1:max(1024,kb)),                &
+                   pC(1:max(1024,ldc),1:max(1024,n)))
           pA = 0
           pB = 0
           pC = 0
           pA(1:lda,1:ka) = a(1:lda,1:ka)
           pB(1:ldb,1:kb) = b(1:ldb,1:kb)
           pC(1:ldc,1:n) = c(1:ldc,1:n)
-          call offload_dgemm(lay, ta, tb, 1024, 1024, 1024,           &
-                             alpha, pA, 1024, pB, 1024, beta, pC, 1024)
+          call offload_dgemm(lay, ta, tb,                             &
+                             max(1024,m), max(1024,n), max(1024,k),   &
+                             alpha,                                   &
+                             pA, max(1024,lda),                       &
+                             pB, max(1024,ldb),                       &
+                             beta,                                    &
+                             pC, max(1024,ldc))
           c(1:ldc,1:n) = pC(1:ldc,1:n)
           !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
+          deallocate(pA, pB, pC)
       end if
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
