@@ -82,8 +82,8 @@ void offload_dgemm(const int oLayout,
 
     double *A = NULL, *B = NULL, *C = NULL;
     int ka = ((!oTransA) ? oK : oM), kb = ((!oTransB) ? oN : oK);
-    int memSizeA = oLda * ka * sizeof(*A), memSizeB = oLdb * kb * sizeof(*B);
-    int memSizeC = oLdc * oN * sizeof(*C);
+    size_t memSizeA = oLda * ka * sizeof(*A), memSizeB = oLdb * kb * sizeof(*B);
+    size_t memSizeC = oLdc * oN * sizeof(*C);
 
     checkCudaErrors(
             cudaMalloc((void**)&A, memSizeA)
@@ -108,10 +108,10 @@ void offload_dgemm(const int oLayout,
     cublasOperation_t transb = (0 == oTransB) ? CUBLAS_OP_N : CUBLAS_OP_T;
     int m = oM, n = oN, k = oK, lda = oLda, ldb = oLdb, ldc = oLdc;
     double alpha[1] = { oAlpha }, beta[1] = { oBeta };
-//    checkCudaErrors(
+    checkCudaErrors(
             cublasDgemm_v2(handle, transa, transb, m, n, k,
                            alpha, A, lda, B, ldb, beta, C, oLdc);
-//            );
+            );
 
     checkCudaErrors(
             cudaMemcpy(oC, C, memSizeC, cudaMemcpyDeviceToHost)
