@@ -26,7 +26,8 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       double precision, dimension(lda,*) :: a
       double precision, dimension(ldb,*) :: b
       double precision, dimension(ldc,*) :: c
-      integer(kind=4) :: ka, kb
+      integer(kind=4) :: ka, kb, istat
+      character(len=255) :: errmsg
       double precision, dimension(:,:), allocatable :: pA, pB, pC
 
 #ifndef DONTWRAPGEMM
@@ -70,7 +71,12 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           end if
           allocate(pA(1:max(1024,lda),1:max(1024,ka)),                &
                    pB(1:max(1024,ldb),1:max(1024,kb)),                &
-                   pC(1:max(1024,ldc),1:max(1024,n)))
+                   pC(1:max(1024,ldc),1:max(1024,n)),                 &
+                   STAT=istat, ERRMSG=errmsg)
+          if (istat .ne. 0) then
+              write(*,*) errmsg, " : istat =", istat
+              call abort
+          end if
           pA = 0
           pB = 0
           pC = 0
