@@ -105,7 +105,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
 !     transposed and set  NROWA and NROWB  as the number of rows of  A
 !     and  B  respectively.
 !
-      write(*,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
+      !write(*,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
       nota = lsame(transa,'N')
       notb = lsame(transb,'N')
       IF (nota) THEN
