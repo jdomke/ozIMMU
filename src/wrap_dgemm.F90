@@ -35,14 +35,14 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       tb = 0
       ! we are in CblasRowMajor, need to revert back to cblas interface
       ! https://netlib.org/lapack/explore-html/dc/d18/cblas__dgemm_8c_source.html#l00102
-      if lsame(transa,'T') then
+      if (lsame(transa,'T')) then
           tb = 1
-      else if lsame(transa,'C') then
+      else if (lsame(transa,'C')) then
           tb = 2
       end if
-      if lsame(transb,'T') then
+      if (lsame(transb,'T')) then
           ta = 1
-      else if lsame(transb,'C') then
+      else if (lsame(transb,'C')) then
           ta = 2
       end if
       call offload_dgemm(lay, ta, tb, n, m, k,                        &
