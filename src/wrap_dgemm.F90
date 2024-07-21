@@ -1,6 +1,6 @@
 subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
         c, ldc)
-#ifdef WRAPGEMM
+#ifndef DONTWRAPGEMM
       use iso_c_binding
       implicit none
       interface
@@ -19,57 +19,60 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
 #else
       implicit none
 #endif
-      character :: transa, transb,
+      character :: transa, transb
       integer(kind=4) :: m, n, k, lda, ldb, ldc, lay, ta, tb
       double precision :: alpha, beta
       double precision, dimension(lda,*) :: a
       double precision, dimension(ldb,*) :: b
       double precision, dimension(ldc,*) :: c
 
-#ifdef WRAPGEMM
-*     .. External Functions ..
+#ifndef DONTWRAPGEMM
+!     .. External Functions ..
       LOGICAL LSAME
       EXTERNAL lsame
       lay = 0
       ta = 0
       tb = 0
+      ! we are in CblasRowMajor, need to revert back to cblas interface
+      ! https://netlib.org/lapack/explore-html/dc/d18/cblas__dgemm_8c_source.html#l00102
       if lsame(transa,'T') then
-          ta = 1
-      else if lsame(transa,'C') then
-          ta = 2
-      end if
-      if lsame(transb,'T') then
           tb = 1
-      else if lsame(transb,'C') then
+      else if lsame(transa,'C') then
           tb = 2
       end if
-      call offload_dgemm(lay, ta, tb, m, n, k,                        &
-                         alpha, a, lda, b, ldb, beta, c, ldc)
+      if lsame(transb,'T') then
+          ta = 1
+      else if lsame(transb,'C') then
+          ta = 2
+      end if
+      call offload_dgemm(lay, ta, tb, n, m, k,                        &
+                         alpha, b, ldb, a, lda, beta, c, ldc)
 #else
-*     .. External Functions ..
+!https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
+!     .. External Functions ..
       LOGICAL LSAME
       EXTERNAL lsame
-*     ..
-*     .. External Subroutines ..
+!     ..
+!     .. External Subroutines ..
       EXTERNAL xerbla
-*     ..
-*     .. Intrinsic Functions ..
+!     ..
+!     .. Intrinsic Functions ..
       INTRINSIC max
-*     ..
-*     .. Local Scalars ..
+!     ..
+!     .. Local Scalars ..
       DOUBLE PRECISION TEMP
       INTEGER I,INFO,J,L,NROWA,NROWB
       LOGICAL NOTA,NOTB
-*     ..
-*     .. Parameters ..
+!     ..
+!     .. Parameters ..
       DOUBLE PRECISION ONE,ZERO
       parameter(one=1.0d+0,zero=0.0d+0)
-*     ..
-*
-*     Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
-*     transposed and set  NROWA and NROWB  as the number of rows of  A
-*     and  B  respectively.
-*
+!     ..
+!
+!     Set  NOTA  and  NOTB  as  true if  A  and  B  respectively are not
+!     transposed and set  NROWA and NROWB  as the number of rows of  A
+!     and  B  respectively.
+!
       write(*,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
       nota = lsame(transa,'N')
       notb = lsame(transb,'N')
@@ -83,15 +86,15 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       ELSE
           nrowb = n
       END IF
-*
-*     Test the input parameters.
-*
+!
+!     Test the input parameters.
+!
       info = 0
-      IF ((.NOT.nota) .AND. (.NOT.lsame(transa,'C')) .AND.
-     +    (.NOT.lsame(transa,'T'))) THEN
+      IF ((.NOT.nota) .AND. (.NOT.lsame(transa,'C')) .AND.            &
+          (.NOT.lsame(transa,'T'))) THEN
           info = 1
-      ELSE IF ((.NOT.notb) .AND. (.NOT.lsame(transb,'C')) .AND.
-     +         (.NOT.lsame(transb,'T'))) THEN
+      ELSE IF ((.NOT.notb) .AND. (.NOT.lsame(transb,'C')) .AND.       &
+               (.NOT.lsame(transb,'T'))) THEN
           info = 2
       ELSE IF (m.LT.0) THEN
           info = 3
@@ -110,14 +113,14 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           CALL xerbla('DGEMM ',info)
           RETURN
       END IF
-*
-*     Quick return if possible.
-*
-      IF ((m.EQ.0) .OR. (n.EQ.0) .OR.
-     +    (((alpha.EQ.zero).OR. (k.EQ.0)).AND. (beta.EQ.one))) RETURN
-*
-*     And if  alpha.eq.zero.
-*
+!
+!     Quick return if possible.
+!
+      IF ((m.EQ.0) .OR. (n.EQ.0) .OR.                                 &
+          (((alpha.EQ.zero).OR. (k.EQ.0)).AND. (beta.EQ.one))) RETURN
+!
+!     And if  alpha.eq.zero.
+!
       IF (alpha.EQ.zero) THEN
           IF (beta.EQ.zero) THEN
               DO 20 j = 1,n
@@ -134,14 +137,14 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           END IF
           RETURN
       END IF
-*
-*     Start the operations.
-*
+!
+!     Start the operations.
+!
       IF (notb) THEN
           IF (nota) THEN
-*
-*           Form  C := alpha*A*B + beta*C.
-*
+!
+!           Form  C := alpha*A*B + beta*C.
+!
               DO 90 j = 1,n
                   IF (beta.EQ.zero) THEN
                       DO 50 i = 1,m
@@ -160,9 +163,9 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
    80             CONTINUE
    90         CONTINUE
           ELSE
-*
-*           Form  C := alpha*A**T*B + beta*C
-*
+!
+!           Form  C := alpha*A**T*B + beta*C
+!
               DO 120 j = 1,n
                   DO 110 i = 1,m
                       temp = zero
@@ -179,9 +182,9 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           END IF
       ELSE
           IF (nota) THEN
-*
-*           Form  C := alpha*A*B**T + beta*C
-*
+!
+!           Form  C := alpha*A*B**T + beta*C
+!
               DO 170 j = 1,n
                   IF (beta.EQ.zero) THEN
                       DO 130 i = 1,m
@@ -200,9 +203,9 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
   160             CONTINUE
   170         CONTINUE
           ELSE
-*
-*           Form  C := alpha*A**T*B**T + beta*C
-*
+!
+!           Form  C := alpha*A**T*B**T + beta*C
+!
               DO 200 j = 1,n
                   DO 190 i = 1,m
                       temp = zero
@@ -218,6 +221,6 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
   200         CONTINUE
           END IF
       END IF
-*
+!
 #endif
 end subroutine
