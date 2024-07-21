@@ -65,12 +65,12 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           pA = 0
           pB = 0
           pC = 0
-          pA(lda,ka) = a(lda,ka)
-          pB(ldb,kb) = b(ldb,kb)
-          pC(ldc,n) = c(ldc,n)
+          pA(1:lda,1:ka) = a(1:lda,1:ka)
+          pB(1:ldb,1:kb) = b(1:ldb,1:kb)
+          pC(1:ldc,1:n) = c(1:ldc,1:n)
           call offload_dgemm(lay, ta, tb, 1024, 1024, 1024,           &
                              alpha, pA, 1024, pB, 1024, beta, pC, 1024)
-          c(ldc,n) = pC(ldc,n)
+          c(1:ldc,1:n) = pC(1:ldc,1:n)
       end if
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
