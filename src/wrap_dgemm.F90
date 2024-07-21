@@ -54,11 +54,11 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       if (m .ge. 1024 .and. n .ge. 1024 .and. k .ge. 1024) then
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
-          !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
+          !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
       else if (m .le. 0 .or. n .le. 0 .or. k .le. 0) then
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
-          !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
+          !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
       else
           ! fucking phd codes
           ka = k
@@ -91,7 +91,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
                              beta,                                    &
                              pC, max(1024,ldc))
           c(1:ldc,1:n) = pC(1:ldc,1:n)
-          !write(*,*) "JJ", c(1:2,1:2), "...", c(ldc-2:ldc,n-2:n)
+          !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
           deallocate(pA, pB, pC, STAT=istat, ERRMSG=errmsg)
           if (istat .ne. 0) then
               write(*,*) errmsg, " : istat =", istat
