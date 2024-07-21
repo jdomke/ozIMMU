@@ -37,6 +37,7 @@ add_library(${lib_name} SHARED
 
 target_include_directories(${lib_name} PUBLIC ${INCDIR})
 target_include_directories(${lib_name} PUBLIC ${SRCDIR}/cutf/include)
+target_include_directories(${lib_name} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 target_link_libraries(${lib_name} PRIVATE
 	cuda
