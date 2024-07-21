@@ -41,6 +41,7 @@ target_include_directories(${lib_name} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIREC
 
 target_link_libraries(${lib_name} PRIVATE
 	cuda
+	CUDA::cublas
 	)
 
 set_target_properties(${lib_name} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
