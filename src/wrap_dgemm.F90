@@ -34,20 +34,21 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       lay = 0
       ta = 0
       tb = 0
-      ! we are in CblasRowMajor, need to revert back to cblas interface
-      ! https://netlib.org/lapack/explore-html/dc/d18/cblas__dgemm_8c_source.html#l00102
+      ! cuBLAS API Reference guide: For maximum compatibility with
+      ! existing Fortran [...], the cuBLAS library uses column-major
+      ! -> we are in F hence ColMajor, no need to revert back
       if (lsame(transa,'T')) then
-          tb = 1
-      else if (lsame(transa,'C')) then
-          tb = 2
-      end if
-      if (lsame(transb,'T')) then
           ta = 1
-      else if (lsame(transb,'C')) then
+      else if (lsame(transa,'C')) then
           ta = 2
       end if
-      call offload_dgemm(lay, ta, tb, n, m, k,                        &
-                         alpha, b, ldb, a, lda, beta, c, ldc)
+      if (lsame(transb,'T')) then
+          tb = 1
+      else if (lsame(transb,'C')) then
+          tb = 2
+      end if
+      call offload_dgemm(lay, ta, tb, m, n, k,                        &
+                         alpha, a, lda, b, ldb, beta, c, ldc)
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
 !     .. External Functions ..

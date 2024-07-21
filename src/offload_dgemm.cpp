@@ -81,43 +81,28 @@ void offload_dgemm(const int oLayout,
     size_t memSizeA = oLda * ka * sizeof(*A), memSizeB = oLdb * kb * sizeof(*B);
     size_t memSizeC = oLdc * oN * sizeof(*C);
 
-    checkCudaErrors(
-            cudaMalloc((void**)&A, memSizeA)
-            );
-    checkCudaErrors(
-            cudaMemcpy(A, oA, memSizeA, cudaMemcpyHostToDevice)
-            );
-    checkCudaErrors(
-            cudaMalloc((void**)&B, memSizeB)
-            );
-    checkCudaErrors(
-            cudaMemcpy(B, oB, memSizeB, cudaMemcpyHostToDevice)
-            );
-    checkCudaErrors(
-            cudaMalloc((void**)&C, memSizeC)
-            );
-    checkCudaErrors(
-            cudaMemcpy(C, oC, memSizeC, cudaMemcpyHostToDevice)
-            );
+    checkCudaErrors(  cudaMalloc((void**)&A, memSizeA)  );
+    checkCudaErrors(  cudaMemcpy(A, oA, memSizeA, cudaMemcpyHostToDevice)  );
+    checkCudaErrors(  cudaMalloc((void**)&B, memSizeB)  );
+    checkCudaErrors(  cudaMemcpy(B, oB, memSizeB, cudaMemcpyHostToDevice)  );
+    checkCudaErrors(  cudaMalloc((void**)&C, memSizeC)  );
+    checkCudaErrors(  cudaMemcpy(C, oC, memSizeC, cudaMemcpyHostToDevice)  );
 
     cublasHandle_t handle;
-    checkCudaErrors(
-            cublasCreate(&handle)
-            );
-    checkCudaErrors(
-            cublasSetMathMode(handle, CUBLAS_DEFAULT_MATH)
-            );
+    checkCudaErrors(  cublasCreate(&handle)  );
 
-    cublasOperation_t transa = (0 == oTransA) ? CUBLAS_OP_N : CUBLAS_OP_T;
-    cublasOperation_t transb = (0 == oTransB) ? CUBLAS_OP_N : CUBLAS_OP_T;
+    cublasOperation_t transa = (0 == oTransA) ? CUBLAS_OP_N :
+                               ((1 == oTransA) ? CUBLAS_OP_T : CUBLAS_OP_C);
+    cublasOperation_t transb = (0 == oTransB) ? CUBLAS_OP_N :
+                               ((1 == oTransB) ? CUBLAS_OP_T : CUBLAS_OP_C);
     int m = oM, n = oN, k = oK, lda = oLda, ldb = oLdb, ldc = oLdc;
     double alpha[1] = { oAlpha }, beta[1] = { oBeta };
-    checkCudaErrors(
-            cublasDgemm_v2(handle, transa, transb, m, n, k,
-                           alpha, A, lda, B, ldb, beta, C, oLdc)
-            );
+    checkCudaErrors(  cublasDgemm_v2(handle, transa, transb, m, n, k,
+                                     alpha, A, lda, B, ldb, beta, C, oLdc)  );
 
-    checkCudaErrors(
-            cudaMemcpy(oC, C, memSizeC, cudaMemcpyDeviceToHost)
-            );
+    checkCudaErrors(  cudaMemcpy(oC, C, memSizeC, cudaMemcpyDeviceToHost)  );
+
+    checkCudaErrors(  cudaFree(A)  );
+    checkCudaErrors(  cudaFree(B)  );
+    checkCudaErrors(  cudaFree(C)  );
 }
