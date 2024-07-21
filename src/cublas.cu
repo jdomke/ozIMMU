@@ -160,7 +160,7 @@ CUBLASAPI cublasStatus_t cublasGemmEx(cublasHandle_t handle, cublasOperation_t t
 	return CUBLAS_STATUS_NOT_SUPPORTED;
 #else
 	const auto compute_mode = get_compute_mode(m, n, k);
-	if (compute_mode != mtk::ozimmu::dgemm && m >= 1024 && n >= 1024 && k >= 1024 &&
+	if (compute_mode != mtk::ozimmu::dgemm && /*m >= 1024 && n >= 1024 && k >= 1024 &&*/
 			((Atype == CUDA_R_64F && Btype == CUDA_R_64F && Ctype == CUDA_R_64F) || (Atype == CUDA_C_64F && Btype == CUDA_C_64F && Ctype == CUDA_C_64F))
 			) {
 		const auto gemm_config = mtk::ozimmu::gemm_list_t {
