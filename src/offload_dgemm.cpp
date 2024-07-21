@@ -81,10 +81,10 @@ void offload_dgemm(const int oLayout,
     cublasOperation_t transb = (0 == oTransB) ? CUBLAS_OP_N : CUBLAS_OP_T;
     int m = oM, n = oN, k = oK, lda = oLda, ldb = oLdb, ldc = oLdc;
     double alpha[1] = { oAlpha }, beta[1] = { oBeta };
-    checkCudaErrors(
+//    checkCudaErrors(
             cublasDgemm_v2(handle, transa, transb, m, n, k,
-                           alpha, A, lda, B, ldb, beta, C, oLdc)
-            );
+                           alpha, A, lda, B, ldb, beta, C, oLdc);
+//            );
 
     checkCudaErrors(
             cudaMemcpy(oC, C, memSizeC, cudaMemcpyDeviceToHost)
