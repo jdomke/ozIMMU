@@ -4,6 +4,9 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
+int _inited_ = 0;
+cublasHandle_t handle;
+
 static const char *_cudaGetErrorEnum(cudaError_t error)
 {
     return cudaGetErrorName(error);
@@ -90,8 +93,10 @@ void offload_dgemm(const int oLayout,
     checkCudaErrors(  cudaMalloc((void**)&C, memSizeC)  );
     checkCudaErrors(  cudaMemcpy(C, oC, memSizeC, cudaMemcpyHostToDevice)  );
 
-    cublasHandle_t handle;
-    checkCudaErrors(  cublasCreate(&handle)  );
+    if (!_inited_) {
+        checkCudaErrors(  cublasCreate(&handle)  );
+        _inited_ = 1;
+    }
 
     cublasOperation_t transa = (0 == oTransA) ? CUBLAS_OP_N :
                                ((1 == oTransA) ? CUBLAS_OP_T : CUBLAS_OP_C);
