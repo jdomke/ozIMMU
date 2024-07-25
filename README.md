@@ -13,13 +13,15 @@ export PATH="$(pwd)/cmake/bin:${PATH}"
 ```bash
 git clone https://github.com/jdomke/ozIMMU --recursive
 cd ozIMMU
+rm -rf build
 cmake -B build \
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-    -DCUDAToolkit_ROOT=/usr/local/cuda \
-    -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+    -DCUDAToolkit_ROOT=/usr/local/cuda-12.5 \
+    -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.5/bin/nvcc \
     -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build build --config Release
 OZIMMU_LIB=$(pwd)/build/libozimmu.so
+cd -
 ```
 
 ## Test example
