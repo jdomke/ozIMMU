@@ -44,6 +44,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           return
       else if (k .le. 0) then
           c(1:m,1:n) = beta*c(1:m,1:n)
+          return
       end if
       ! cuBLAS API Reference guide: For maximum compatibility with
       ! existing Fortran [...], the cuBLAS library uses column-major
