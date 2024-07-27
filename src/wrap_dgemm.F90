@@ -34,7 +34,8 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
 !     .. External Functions ..
       LOGICAL LSAME
       EXTERNAL lsame
-      !write(*,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
+      !write(6,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
+      !call flush(6)
       lay = 0
       ta = 0
       tb = 0
@@ -60,7 +61,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       if (m .ge. 1024 .and. n .ge. 1024 .and. k .ge. 1024) then
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
-          !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
+          !write(6,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
           return
       end if
       ! padding code to work around a current issue
@@ -94,7 +95,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
                          beta,                                        &
                          pC, max(1024,ldc))
       c(1:ldc,1:n) = pC(1:ldc,1:n)
-      !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
+      !write(6,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
       deallocate(pA, pB, pC, STAT=istat, ERRMSG=errmsg)
       if (istat .ne. 0) then
           write(*,*) errmsg, " : istat =", istat
@@ -127,7 +128,8 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
 !     transposed and set  NROWA and NROWB  as the number of rows of  A
 !     and  B  respectively.
 !
-      !write(*,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
+      !write(6,*) "DGEMM with ", transa, transb, m, n, k, lda, ldb, ldc
+      !call flush(6)
       nota = lsame(transa,'N')
       notb = lsame(transb,'N')
       IF (nota) THEN
