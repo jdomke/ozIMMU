@@ -34,7 +34,8 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
       EXTERNAL lsame
 !     .. Local Scalars ..
       LOGICAL upper
-      !write(*,*) "DSYRK with ", uplo, trans, n, k, lda, ldc
+      !write(6,*) "DSYRK with ", uplo, trans, n, k, lda, ldc
+      !call flush(6)
       lay = 0
       ta = 0
       tb = 1
@@ -107,7 +108,7 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
               c(j:n,j) = pC(j:n,j)
           end do
       end if
-      !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
+      !write(6,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
       deallocate(pA, pB, pC, STAT=istat, ERRMSG=errmsg)
       if (istat .ne. 0) then
           write(*,*) errmsg, " : istat =", istat
@@ -128,7 +129,7 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
 !     ..
 !     .. Local Scalars ..
       DOUBLE PRECISION TEMP
-      INTEGER I,INFO,J,L,NROWA
+      INTEGER INFO,L,NROWA
       LOGICAL UPPER
 !     ..
 !     .. Parameters ..
@@ -138,6 +139,8 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
 !
 !     Test the input parameters.
 !
+      !write(6,*) "DSYRK with ", uplo, trans, n, k, lda, ldc
+      !call flush(6)
       IF (lsame(trans,'N')) THEN
           nrowa = n
       ELSE
