@@ -38,6 +38,12 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       lay = 0
       ta = 0
       tb = 0
+      ! early return if possible
+      if (m .le. 0 .or. n .le. 0) then
+          return
+      else if (k .le. 0) then
+          c(1:m,1:n) = beta*c(1:m,1:n)
+      end if
       ! cuBLAS API Reference guide: For maximum compatibility with
       ! existing Fortran [...], the cuBLAS library uses column-major
       ! -> we are in F hence ColMajor, no need to revert back
@@ -55,49 +61,46 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
           !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
-      else if (m .le. 0 .or. n .le. 0 .or. k .le. 0) then
-          call offload_dgemm(lay, ta, tb, m, n, k,                    &
-                             alpha, a, lda, b, ldb, beta, c, ldc)
-          !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
-      else
-          ! fucking phd codes
-          ka = k
-          kb = n
-          if (ta .ne. 0) then
-              ka = m
-          end if
-          if (tb .ne. 0) then
-              kb = k
-          end if
-          allocate(pA(1:max(1024,lda),1:max(1024,ka)),                &
-                   pB(1:max(1024,ldb),1:max(1024,kb)),                &
-                   pC(1:max(1024,ldc),1:max(1024,n)),                 &
-                   STAT=istat, ERRMSG=errmsg)
-          if (istat .ne. 0) then
-              write(*,*) errmsg, " : istat =", istat
-              call abort
-          end if
-          pA = 0
-          pB = 0
-          pC = 0
-          pA(1:lda,1:ka) = a(1:lda,1:ka)
-          pB(1:ldb,1:kb) = b(1:ldb,1:kb)
-          pC(1:ldc,1:n) = c(1:ldc,1:n)
-          call offload_dgemm(lay, ta, tb,                             &
-                             max(1024,m), max(1024,n), max(1024,k),   &
-                             alpha,                                   &
-                             pA, max(1024,lda),                       &
-                             pB, max(1024,ldb),                       &
-                             beta,                                    &
-                             pC, max(1024,ldc))
-          c(1:ldc,1:n) = pC(1:ldc,1:n)
-          !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
-          deallocate(pA, pB, pC, STAT=istat, ERRMSG=errmsg)
-          if (istat .ne. 0) then
-              write(*,*) errmsg, " : istat =", istat
-              call abort
-          end if
+          return
       end if
+      ! padding code to work around a current issue
+      ka = k
+      kb = n
+      if (ta .ne. 0) then
+          ka = m
+      end if
+      if (tb .ne. 0) then
+          kb = k
+      end if
+      allocate(pA(1:max(1024,lda),1:max(1024,ka)),                    &
+               pB(1:max(1024,ldb),1:max(1024,kb)),                    &
+               pC(1:max(1024,ldc),1:max(1024,n)),                     &
+               STAT=istat, ERRMSG=errmsg)
+      if (istat .ne. 0) then
+          write(*,*) errmsg, " : istat =", istat
+          call abort
+      end if
+      pA = 0
+      pB = 0
+      pC = 0
+      pA(1:lda,1:ka) = a(1:lda,1:ka)
+      pB(1:ldb,1:kb) = b(1:ldb,1:kb)
+      pC(1:ldc,1:n) = c(1:ldc,1:n)
+      call offload_dgemm(lay, ta, tb,                                 &
+                         max(1024,m), max(1024,n), max(1024,k),       &
+                         alpha,                                       &
+                         pA, max(1024,lda),                           &
+                         pB, max(1024,ldb),                           &
+                         beta,                                        &
+                         pC, max(1024,ldc))
+      c(1:ldc,1:n) = pC(1:ldc,1:n)
+      !write(*,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
+      deallocate(pA, pB, pC, STAT=istat, ERRMSG=errmsg)
+      if (istat .ne. 0) then
+          write(*,*) errmsg, " : istat =", istat
+          call abort
+      end if
+      return
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
 !     .. External Functions ..
