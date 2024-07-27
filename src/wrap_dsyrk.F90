@@ -52,6 +52,7 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
                   c(j:n,j) = beta*c(j:n,j)
               end do
           end if
+          return
       end if
       ! cuBLAS API Reference guide: For maximum compatibility with
       ! existing Fortran [...], the cuBLAS library uses column-major
