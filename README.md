@@ -11,15 +11,20 @@ export PATH="$(pwd)/cmake/bin:${PATH}"
 
 ## Build
 ```bash
+export NVHPC_CUDA_HOME=/usr/local/cuda-12.5
+export PATH="${NVHPC_CUDA_HOME}/bin:${PATH}"
+export LD_LIBRARY_PATH="${NVHPC_CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
 git clone https://github.com/jdomke/ozIMMU --recursive
 cd ozIMMU
+rm -rf build
 cmake -B build \
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-    -DCUDAToolkit_ROOT=/usr/local/cuda \
-    -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+    -DCUDAToolkit_ROOT=${NVHPC_CUDA_HOME} \
+    -DCMAKE_CUDA_COMPILER=${NVHPC_CUDA_HOME}/bin/nvcc \
     -DCMAKE_CUDA_ARCHITECTURES=90
 cmake --build build --config Release
 OZIMMU_LIB=$(pwd)/build/libozimmu.so
+cd -
 ```
 
 ## Test example
