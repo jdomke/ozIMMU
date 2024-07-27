@@ -24,6 +24,7 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
       double precision :: alpha, beta
       double precision, dimension(lda,*) :: a
       double precision, dimension(ldc,*) :: c
+      integer(kind=4) :: ka, istat
       character(len=255) :: errmsg
       double precision, dimension(:,:), allocatable :: pA, pB, pC
 
