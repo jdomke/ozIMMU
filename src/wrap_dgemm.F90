@@ -60,6 +60,10 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       else if (lsame(transb,'C')) then
           tb = 2
       end if
+#ifndef WRAPWITHPADDING
+      call offload_dgemm(lay, ta, tb, m, n, k, alpha, a, lda, b, ldb, &
+                         beta, c, ldc)
+#else
       if (m .ge. 1024 .and. n .ge. 1024 .and. k .ge. 1024) then
           call offload_dgemm(lay, ta, tb, m, n, k,                    &
                              alpha, a, lda, b, ldb, beta, c, ldc)
@@ -107,7 +111,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           write(*,*) errmsg, " : istat =", istat
           call abort
       end if
-      return
+#endif
 #else
 !https://netlib.org/lapack/explore-html/d7/d2b/dgemm_8f_source.html
 !     .. External Functions ..

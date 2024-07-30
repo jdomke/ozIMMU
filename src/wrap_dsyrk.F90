@@ -49,10 +49,15 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
           ka = n
       end if
       ! re-use dgemm, so copy A into B and do some other tricks
+#ifndef WRAPWITHPADDING
+      allocate(pA(1:lda,1:ka), pB(1:lda,1:ka), pC(1:ldc,1:n),         &
+               STAT=istat, ERRMSG=errmsg)
+#else
       allocate(pA(1:max(1024,lda),1:max(1024,ka)),                    &
                pB(1:max(1024,lda),1:max(1024,ka)),                    &
                pC(1:max(1024,ldc),1:max(1024,n)),                     &
                STAT=istat, ERRMSG=errmsg)
+#endif
       if (istat .ne. 0) then
           write(*,*) errmsg, " : istat =", istat
           call abort
@@ -63,13 +68,18 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
       pA(1:lda0,1:ka) = a(1:lda0,1:ka) ! copy only matrix, not lda part
       pB(1:lda0,1:ka) = a(1:lda0,1:ka) ! since it likely contains trash
       pC(1:n,1:n) = c(1:n,1:n)
+#ifndef WRAPWITHPADDING
+      call dgemm(trans, invtrans, n, n, k, alpha, pA, lda, pB, lda,   &
+                 beta, pC, ldc)
+#else
       call dgemm(trans, invtrans,                                     &
-                         max(1024,n), max(1024,n), max(1024,k),       &
-                         alpha,                                       &
-                         pA, max(1024,lda),                           &
-                         pB, max(1024,lda),                           &
-                         beta,                                        &
-                         pC, max(1024,ldc))
+                 max(1024,n), max(1024,n), max(1024,k),               &
+                 alpha,                                               &
+                 pA, max(1024,lda),                                   &
+                 pB, max(1024,lda),                                   &
+                 beta,                                                &
+                 pC, max(1024,ldc))
+#endif
       if (upper) then
           do j = 1, n
               c(1:j,j) = pC(1:j,j)
