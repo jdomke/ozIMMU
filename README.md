@@ -29,6 +29,7 @@ cd -
 
 ## Test example
 ```bash
+cd ozIMMU/
 sed -i -e 's@= . \* block_size@= 32 * block_size@g' -e 's@Sgemm@Dgemm@g' -e 's@float@double@g' -e 's@double msecTotal@float msecTotal@g' cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS.cpp
 sed -i -e 's@sdkCompareL2fe(const.*@sdkCompareL2fe(const double *reference, const double *data,@g' cuda-samples/Common/helper_image.h
 make -C cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/ SMS="90"
@@ -37,6 +38,7 @@ cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS -device=0 
 # try with ozaki scheme
 OZIMMU_COMPUTE_MODE=fp64_int8_4 OZIMMU_INFO=1 OZIMMU_ERROR=1 OZIMMU_ENABLE_CULIP_PROFILING=1 LD_PRELOAD=${OZIMMU_LIB} \
     cuda-samples/Samples/4_CUDA_Libraries/matrixMulCUBLAS/matrixMulCUBLAS -device=0 -sizemult=1
+cd -
 ```
 
 ## Test RI-MP2 quantum chemistry code
