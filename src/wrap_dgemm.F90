@@ -21,7 +21,8 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       implicit none
 #endif
       character :: transa, transb
-      integer(kind=4) :: m, n, k, lda, ldb, ldc, lay, ta, tb
+      integer(kind=4) :: m, n, k, lda, ldb, ldc
+      integer(kind=4) :: lda0, ldb0, lay, ta, tb
       double precision :: alpha, beta
       double precision, dimension(lda,*) :: a
       double precision, dimension(ldb,*) :: b
@@ -66,12 +67,16 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
           return
       end if
       ! padding code to work around a current issue
+      lda0 = m
       ka = k
+      ldb0 = k
       kb = n
       if (ta .ne. 0) then
+          lda0 = k
           ka = m
       end if
       if (tb .ne. 0) then
+          ldb0 = n
           kb = k
       end if
       allocate(pA(1:max(1024,lda),1:max(1024,ka)),                    &
@@ -85,9 +90,9 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
       pA = 0
       pB = 0
       pC = 0
-      pA(1:lda,1:ka) = a(1:lda,1:ka)
-      pB(1:ldb,1:kb) = b(1:ldb,1:kb)
-      pC(1:ldc,1:n) = c(1:ldc,1:n)
+      pA(1:lda0,1:ka) = a(1:lda0,1:ka) ! copy only matrix, not lda part
+      pB(1:ldb0,1:kb) = b(1:ldb0,1:kb) ! since it likely contains trash
+      pC(1:m,1:n) = c(1:m,1:n)
       call offload_dgemm(lay, ta, tb,                                 &
                          max(1024,m), max(1024,n), max(1024,k),       &
                          alpha,                                       &
@@ -95,7 +100,7 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
                          pB, max(1024,ldb),                           &
                          beta,                                        &
                          pC, max(1024,ldc))
-      c(1:ldc,1:n) = pC(1:ldc,1:n)
+      c(1:m,1:n) = pC(1:m,1:n)
       !write(6,*) "JJ", c(1:min(m,2),1:min(n,2)), "...", c(max(ldc-1,1):ldc,max(n-1,1):n)
       deallocate(pA, pB, pC, STAT=istat, ERRMSG=errmsg)
       if (istat .ne. 0) then

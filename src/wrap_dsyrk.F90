@@ -1,26 +1,7 @@
 subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
-#ifndef DONTWRAPGEMM
-      use iso_c_binding
       implicit none
-      interface
-      subroutine offload_dgemm(oLayout, oTransA, oTransB, oM, oN, oK, &
-                               oAlpha, oA, oLda, oB, oLdb, oBeta,     &
-                               oC, oLdc) bind(c)
-      import c_int, c_double
-      integer(kind=c_int), intent(in), value :: oLayout
-      integer(kind=c_int), intent(in), value :: oTransA, oTransB
-      integer(kind=c_int), intent(in), value :: oM, oN, oK
-      integer(kind=c_int), intent(in), value :: oLda, oLdb, oLdc
-      real(kind=c_double), intent(in), value :: oAlpha, oBeta
-      real(kind=c_double), intent(in)    :: oA(oLda,*), oB(oLdb,*)
-      real(kind=c_double), intent(inout) :: oC(oLdc,*)
-      end subroutine offload_dgemm
-      end interface
-#else
-      implicit none
-#endif
-      character :: uplo, trans
-      integer(kind=4) :: i, j, n, k, lda, ldc, lay, ta, tb
+      character :: uplo, trans, invtrans
+      integer(kind=4) :: i, j, n, k, lda, lda0, ldc
       double precision :: alpha, beta
       double precision, dimension(lda,*) :: a
       double precision, dimension(ldc,*) :: c
@@ -36,9 +17,6 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
       LOGICAL upper
       !write(6,*) "DSYRK with ", uplo, trans, n, k, lda, ldc
       !call flush(6)
-      lay = 0
-      ta = 0
-      tb = 1
       ! early return if possible
       if (n .le. 0) then
           return
@@ -57,16 +35,17 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
       ! cuBLAS API Reference guide: For maximum compatibility with
       ! existing Fortran [...], the cuBLAS library uses column-major
       ! -> we are in F hence ColMajor, no need to revert back
+      invtrans = 'T'
       if (lsame(trans,'T')) then
-          ta = 1
-          tb = 0
+          invtrans='N'
       else if (lsame(trans,'C')) then
-          ta = 2
-          tb = 0
+          invtrans='N'
       end if
       upper = lsame(uplo,'U')
+      lda0 = n
       ka = k
-      if (ta .ne. 0) then
+      if (lsame(trans,'T')) then
+          lda0 = k
           ka = n
       end if
       ! re-use dgemm, so copy A into B and do some other tricks
@@ -81,19 +60,10 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
       pA = 0
       pB = 0
       pC = 0
-      pA(1:lda,1:ka) = a(1:lda,1:ka)
-      pB(1:lda,1:ka) = a(1:lda,1:ka)
-      !pC(1:ldc,1:n) = c(1:ldc,1:n)
-      if (upper) then
-          do j = 1, n
-              pC(1:j,j) = c(1:j,j)
-          end do
-      else
-          do j = 1, n
-              pC(j:n,j) = c(j:n,j)
-          end do
-      end if
-      call offload_dgemm(lay, ta, tb,                                 &
+      pA(1:lda0,1:ka) = a(1:lda0,1:ka) ! copy only matrix, not lda part
+      pB(1:lda0,1:ka) = a(1:lda0,1:ka) ! since it likely contains trash
+      pC(1:n,1:n) = c(1:n,1:n)
+      call dgemm(trans, invtrans,                                     &
                          max(1024,n), max(1024,n), max(1024,k),       &
                          alpha,                                       &
                          pA, max(1024,lda),                           &
@@ -115,7 +85,6 @@ subroutine dsyrk(uplo, trans, n, k, alpha, a, lda, beta, c, ldc)
           write(*,*) errmsg, " : istat =", istat
           call abort
       end if
-      return
 #else
 !https://netlib.org/lapack/explore-html/dc/d05/dsyrk_8f_source.html
 !     .. External Functions ..
