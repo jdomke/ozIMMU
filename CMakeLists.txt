@@ -22,6 +22,7 @@ set(SRCDIR src)
 file(GLOB HEADERS "${INCDIR}/ozimmu/*.hpp")
 
 SET(lib_name ozimmu)
+add_library(${lib_name} SHARED
   ${SRCDIR}/handle.cu
   ${SRCDIR}/config.cu
   ${SRCDIR}/split.cu
