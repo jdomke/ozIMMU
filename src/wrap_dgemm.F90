@@ -290,3 +290,78 @@ subroutine dgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta,&
 !
 #endif
 end subroutine
+
+! wrap zgemm by having it just call dgemm under the hood
+subroutine zgemm(transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc)
+  ! Subroutine with the same API as ZGEMM, implemented using DGEMM.
+  character(len=1), intent(in) :: transa, transb
+  integer, intent(in) :: m, n, k, lda, ldb, ldc
+  complex*16, intent(in) :: alpha
+  complex*16, intent(in) :: a(lda, k), b(ldb, n)
+  complex*16, intent(inout) :: c(ldc, n)
+  complex*16, intent(in) :: beta
+
+  real*8, dimension(:,:), allocatable :: ar, ai, br, bi, cr, ci
+  integer :: i, j
+  integer :: ka, kb
+  character(len=1) :: tra, trb
+
+  if (transa == 'N' .or. transa == 'n') then
+    ka = k
+  else
+    ka = m
+  endif
+  if (transb == 'N' .or. transb == 'n') then
+    kb = n
+  else
+    kb = k
+  endif
+
+  tra = transa
+  trb = transb
+  if (tra == 'C' .or. tra == 'c') then
+    tra = 'T'
+  end if
+  if (trb == 'C' .or. trb == 'c') then
+    trb = 'T'
+  end if
+
+  allocate(ar(lda, k), ai(lda, k))
+  allocate(br(ldb, n), bi(ldb, n))
+  allocate(cr(ldc, n), ci(ldc, n))
+
+  ! split real / complex
+  do i = 1, lda
+    do j = 1, ka
+      ar(i, j) = dble(a(i, j))
+      ai(i, j) = dimag(a(i, j))
+      if (transa == "C" .or. transa == "c") ai(i, j) = -ai(i, j)
+    end do
+  end do
+
+  do i = 1, ldb
+    do j = 1, kb
+      br(i, j) = dble(b(i, j))
+      bi(i, j) = dimag(b(i, j))
+      if (transb == "C" .or. transb == "c") bi(i, j) = -bi(i, j)
+    end do
+  end do
+
+  cr = 0
+  ci = 0
+
+  ! multiply parts
+  call dgemm(tra, trb, m, n, k, dble(alpha), ar, lda, br, ldb, dble(1), cr, ldc)
+  call dgemm(tra, trb, m, n, k, -dble(alpha), ai, lda, bi, ldb, dble(1), cr, ldc)
+  call dgemm(tra, trb, m, n, k, dble(alpha), ar, lda, bi, ldb, dble(1), ci, ldc)
+  call dgemm(tra, trb, m, n, k, dble(alpha), ai, lda, br, ldb, dble(1), ci, ldc)
+
+  ! accumulate
+  do i = 1, ldc
+    do j = 1, n
+      c(i, j) = beta * c(i, j) + dcmplx(cr(i, j), ci(i, j))
+    end do
+  end do
+
+  deallocate(ar, ai, br, bi, cr, ci)
+end subroutine zgemm
